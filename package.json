@@ -17,6 +17,8 @@
     "onCommand:blender.build",
     "onCommand:blender.buildAndStart",
     "onCommand:blender.startWithoutCDebugger",
+    "onCommand:blender.installPythonHeaderFiles",
+    "onCommand:blender.installPythonModule",
     "onCommand:blender.buildPythonApiDocs",
     "onCommand:blender.reloadAddons",
     "onCommand:blender.newAddon",
@@ -59,6 +61,16 @@
       {
         "command": "blender.startWithoutCDebugger",
         "title": "Start without C Debugger",
+        "category": "Blender"
+      },
+      {
+        "command": "blender.installPythonHeaderFiles",
+        "title": "Install Header Files into bundled Python",
+        "category": "Blender"
+      },
+      {
+        "command": "blender.installPythonModule",
+        "title": "PIP install external module",
         "category": "Blender"
       },
       {
@@ -217,13 +229,15 @@
   },
   "devDependencies": {
     "@types/mocha": "^2.2.42",
-    "@types/node": "^8.10.25",
+    "@types/node": "^8.10.55",
     "@types/request": "^2.48.1",
     "tslint": "^5.8.0",
     "typescript": "^2.6.1",
     "vscode": "^1.1.21"
   },
   "dependencies": {
+    "@types/tar-fs": "^1.16.1",
+    "audit": "0.0.6",
     "request": "^2.87.0"
   },
   "extensionDependencies": [

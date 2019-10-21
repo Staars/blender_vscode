@@ -8,6 +8,7 @@ import { AddonWorkspaceFolder } from './addon_folder';
 import { BlenderExecutable } from './blender_executable';
 import { BlenderWorkspaceFolder } from './blender_folder';
 import { startServer, stopServer, RunningBlenders } from './communication';
+import { installPythonHeaderFiles, installPythonModule } from "./python_installs";
 import {
     COMMAND_runScript, COMMAND_newScript, COMMAND_setScriptContext,
     COMMAND_openScriptsFolder
@@ -20,6 +21,8 @@ export function activate(context: vscode.ExtensionContext) {
         ['blender.build', COMMAND_build],
         ['blender.buildAndStart', COMMAND_buildAndStart],
         ['blender.startWithoutCDebugger', COMMAND_startWithoutCDebugger],
+        ['blender.installPythonHeaderFiles', COMMAND_installPythonHeaderFiles],
+        ['blender.installPythonModule', COMMAND_installPythonModule],
         ['blender.buildPythonApiDocs', COMMAND_buildPythonApiDocs],
         ['blender.reloadAddons', COMMAND_reloadAddons],
         ['blender.newAddon', COMMAND_newAddon],
@@ -90,6 +93,18 @@ async function COMMAND_build() {
 
 async function COMMAND_startWithoutCDebugger() {
     await BlenderExecutable.LaunchAny();
+}
+
+async function COMMAND_installPythonHeaderFiles() {
+    let blenderFolder : BlenderExecutable = await BlenderExecutable.GetAny();
+    vscode.window.showInformationMessage(blenderFolder.data.path);
+    await installPythonHeaderFiles(blenderFolder.data.path);
+}
+
+async function COMMAND_installPythonModule() {
+    let blenderFolder : BlenderExecutable = await BlenderExecutable.GetAny();
+    vscode.window.showInformationMessage(blenderFolder.data.path);
+    await installPythonModule(blenderFolder.data.path);
 }
 
 async function COMMAND_buildPythonApiDocs() {
