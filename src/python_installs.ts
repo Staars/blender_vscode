@@ -72,7 +72,7 @@ function downloadAndInstallPythonHeaders(pythonVersion: string, pythonPath: stri
         vscode.window.showInformationMessage('Download done ! Now decompressing!');
         fs.createReadStream(archivePath).pipe(unzip).pipe(tar.extract('/tmp')).on('finish', function () {
             vscode.window.showInformationMessage('Decompress done ! Now installing!');
-            tar.pack('/tmp/Python-' + pythonVersion + '/Include').pipe(tar.extract(pythonPath + '/include')).on('finish', function () {
+            tar.pack('/tmp/Python-' + pythonVersion + '/Include').pipe(tar.extract(pythonPath + '/include/python3.7m/')).on('finish', function () {
                 vscode.window.showInformationMessage('Headers installed!');
                 return;
               });
