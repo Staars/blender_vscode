@@ -1,6 +1,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as os from 'os';
 import * as child_process from 'child_process';
 import * as request from 'request';
 import * as fs from 'fs';
@@ -59,9 +60,11 @@ function getPythonVersion(pythonPath: String): Promise<string> {
 }
 
 function downloadAndInstallPythonHeaders(pythonVersion: string, pythonPath: string) {
-    let url = 'https://www.python.org/ftp/python/'+pythonVersion + '/Python-'+ pythonVersion + '.tgz';
-    let archivePath = '/tmp/Python-' + pythonVersion + '.tgz';
+    let url = 'https://www.python.org/ftp/python/'+ pythonVersion + '/Python-'+ pythonVersion + '.tgz';
     let unzip = zlib.createGunzip();
+    let tmpDir = os.tmpdir();
+    let archivePath = tmpDir + '/Python-' + pythonVersion + '.tgz';
+    let shortPythonVersion = pythonVersion.slice(0,3);
 
     request.head(url, function(err, res, body){
     console.log('content-type:', res.headers['content-type']);
@@ -70,9 +73,9 @@ function downloadAndInstallPythonHeaders(pythonVersion: string, pythonPath: stri
     request(url).pipe(fs.createWriteStream(archivePath)).on('close', function()
         {
         vscode.window.showInformationMessage('Download done ! Now decompressing!');
-        fs.createReadStream(archivePath).pipe(unzip).pipe(tar.extract('/tmp')).on('finish', function () {
+        fs.createReadStream(archivePath).pipe(unzip).pipe(tar.extract(tmpDir)).on('finish', function () {
             vscode.window.showInformationMessage('Decompress done ! Now installing!');
-            tar.pack('/tmp/Python-' + pythonVersion + '/Include').pipe(tar.extract(pythonPath + '/include/python3.7m/')).on('finish', function () {
+            tar.pack(tmpDir + '/Python-' + pythonVersion + '/Include').pipe(tar.extract(pythonPath + '/include/python' + shortPythonVersion + 'm/')).on('finish', function () {
                 vscode.window.showInformationMessage('Headers installed!');
                 return;
               });
