@@ -7,10 +7,11 @@ import * as request from 'request';
 import * as fs from 'fs';
 import * as zlib from 'zlib';
 import * as tar from 'tar-fs';
+import { join } from 'path';
 
 
 
-export async function installPythonHeaderFiles(blenderPath: String) {
+export async function installPythonHeaderFiles(blenderPath: string) {
 
     vscode.window.showInformationMessage('Bundled Python Path: ' + blenderPath);
     let pythonPath = await getPythonPath(blenderPath);
@@ -20,7 +21,7 @@ export async function installPythonHeaderFiles(blenderPath: String) {
     downloadAndInstallPythonHeaders(pythonVersion, pythonPath);
 }
 
-function getPythonPath(blenderPath: String): Promise<string>  {
+function getPythonPath(blenderPath: string): Promise<string>  {
     let testString = '###TEST_BLENDER###';
     let command = blenderPath + ` --factory-startup -b --python-expr "import sys;print('${testString}');sys.stdout.flush();sys.exit()"`;
     console.log('BlenderPath:' + blenderPath);
@@ -43,10 +44,10 @@ function getPythonPath(blenderPath: String): Promise<string>  {
 }
 
 
-function getPythonVersion(pythonPath: String): Promise<string> {
-
+function getPythonVersion(pythonPath: string): Promise<string> {
+    let pythonBinary = join(pythonPath, 'bin', "python3*");
     return new Promise<string>((resolve, reject) => {
-        child_process.exec(pythonPath + '/bin/python3* -V', {}, (err, stdout, stderr) => {
+        child_process.exec(pythonBinary + ' -V', {}, (err, stdout, stderr) => {
             let text = stdout.toString();
             if (text.length === 0) {
                 var message = 'Call Blender bundled python with -V failed.';
@@ -63,19 +64,19 @@ function downloadAndInstallPythonHeaders(pythonVersion: string, pythonPath: stri
     let url = 'https://www.python.org/ftp/python/'+ pythonVersion + '/Python-'+ pythonVersion + '.tgz';
     let unzip = zlib.createGunzip();
     let tmpDir = os.tmpdir();
-    let archivePath = tmpDir + '/Python-' + pythonVersion + '.tgz';
+    let archivePath = join(tmpDir, 'Python-' + pythonVersion + '.tgz');
     let shortPythonVersion = pythonVersion.slice(0,3);
 
     request.head(url, function(err, res, body){
     console.log('content-type:', res.headers['content-type']);
     console.log('content-length:', res.headers['content-length']);
-   
+
     request(url).pipe(fs.createWriteStream(archivePath)).on('close', function()
         {
         vscode.window.showInformationMessage('Download done ! Now decompressing!');
         fs.createReadStream(archivePath).pipe(unzip).pipe(tar.extract(tmpDir)).on('finish', function () {
             vscode.window.showInformationMessage('Decompress done ! Now installing!');
-            tar.pack(tmpDir + '/Python-' + pythonVersion + '/Include').pipe(tar.extract(pythonPath + '/include/python' + shortPythonVersion + 'm/')).on('finish', function () {
+            tar.pack(join(tmpDir, 'Python-' + pythonVersion, 'Include')).pipe(tar.extract(join(pythonPath, 'include', 'python' + shortPythonVersion + 'm'))).on('finish', function () {    
                 vscode.window.showInformationMessage('Headers installed!');
                 return;
               });
@@ -86,18 +87,19 @@ function downloadAndInstallPythonHeaders(pythonVersion: string, pythonPath: stri
 
 
 
-export async function installPythonModule(blenderPath: String) {
+export async function installPythonModule(blenderPath: string) {
     let pythonPath = await getPythonPath(blenderPath);
     console.log('Bundled python:' + pythonPath);
     let externalModule = await vscode.window.showInputBox();
-    let command = pythonPath + '/bin/python3* ' + pythonPath + '/lib/python3.7/site-packages/pip install ' + externalModule;
+    let pythonBinary = join(pythonPath, 'bin', "python3* ");
+    let command = pythonBinary + join(pythonPath, 'lib', 'python3.7', 'site-packages','pip') + ' install ' + externalModule;
 
     return new Promise<string>((resolve, reject) => {
         child_process.exec(command, {}, (err, stdout, stderr) => {
             console.log(command);
             let text = stdout.toString();
             if (text.length === 0) {
-                var message = 'Error calling bindled python.';
+                var message = 'Error calling bundled python.';
                 console.log(text);
                 reject(new Error(message));
             }
