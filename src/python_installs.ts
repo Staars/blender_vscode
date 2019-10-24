@@ -44,8 +44,8 @@ function getPythonPath(blenderPath: string): Promise<string>  {
 }
 
 
-function getPythonVersion(pythonPath: string): Promise<string> {
-    let pythonBinary = join(pythonPath, 'bin', "python3*");
+async function getPythonVersion(pythonPath: string): Promise<string> {
+    let pythonBinary = join(pythonPath, 'bin', await getPythonBinary(pythonPath));
     return new Promise<string>((resolve, reject) => {
         child_process.exec(pythonBinary + ' -V', {}, (err, stdout, stderr) => {
             let text = stdout.toString();
@@ -60,7 +60,24 @@ function getPythonVersion(pythonPath: string): Promise<string> {
     });
 }
 
-function downloadAndInstallPythonHeaders(pythonVersion: string, pythonPath: string) {
+async function getPythonBinary(pythonPath: string): Promise<string> {
+    console.log(pythonPath);
+    return new Promise<string>((resolve, reject) => {
+        let binaryPath = fs.readdirSync(join(pythonPath, 'bin')).filter(
+            item =>
+                fs.statSync(join(pythonPath, 'bin', item)).isFile() && (item.includes('python3'))
+        ).sort();
+        if (binaryPath.length === 0) {
+            var message = 'Blender bundled python binary not found';
+            reject(new Error(message));
+        }
+        else {
+            resolve(binaryPath[0]);
+        }
+    });    
+}
+
+async function downloadAndInstallPythonHeaders(pythonVersion: string, pythonPath: string) {
     let url = 'https://www.python.org/ftp/python/'+ pythonVersion + '/Python-'+ pythonVersion + '.tgz';
     let unzip = zlib.createGunzip();
     let tmpDir = os.tmpdir();
@@ -91,8 +108,8 @@ export async function installPythonModule(blenderPath: string) {
     let pythonPath = await getPythonPath(blenderPath);
     console.log('Bundled python:' + pythonPath);
     let externalModule = await vscode.window.showInputBox();
-    let pythonBinary = join(pythonPath, 'bin', "python3* ");
-    let command = pythonBinary + join(pythonPath, 'lib', 'python3.7', 'site-packages','pip') + ' install ' + externalModule;
+    let pythonBinary = join(pythonPath, 'bin', await getPythonBinary(pythonPath));
+    let command = pythonBinary + ' ' + join(pythonPath, 'lib', 'python3.7', 'site-packages','pip') + ' install ' + externalModule;
 
     return new Promise<string>((resolve, reject) => {
         child_process.exec(command, {}, (err, stdout, stderr) => {
